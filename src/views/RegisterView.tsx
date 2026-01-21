@@ -1,31 +1,41 @@
 import { Link } from "react-router-dom";
 import { useForm } from 'react-hook-form'
+import { isAxiosError } from "axios";
+import { toast } from 'sonner'
 import type { RegisterForm } from "../types";
 import ErrorMessage from "../components/ErrorMessage";
+import api from "../config/axios";
 export default function RegisterView() {
-    const initialValues:RegisterForm = {
+    const initialValues: RegisterForm = {
         name: "",
         email: "",
         handle: "",
         password: "",
         password_confirmation: ""
     }
-    const { register, handleSubmit, watch, formState: { errors } } = useForm({ defaultValues: initialValues })
-    
+    const { register, handleSubmit, watch, reset, formState: { errors } } = useForm({ defaultValues: initialValues })
+
     const password = watch('password')
 
-    const handleRegister = (formData:RegisterForm) => {
-        console.log('from handle register',formData)
+    const handleRegister = async (formData: RegisterForm) => {
+        try {
+            const { data } = await api.post('/auth/register', formData)
+            console.log(data)
+            toast.success(data)
+            reset()
+            return data
+        } catch (error) {
+            if (isAxiosError(error) && error.response) {
+                console.log(error.response.data.message)
+                toast.error(error.response?.data.message)
+                return error.response?.data.message
+            }
+        }
     }
     return (
         <>
             <h1 className="text-white text-3xl font-bold">Crear Cuenta</h1>
-            <nav className="mt-10">
-                <Link
-                    className="text-white text-center text-lg block"
-                    to="/auth/login"
-                >Ya tienes una cuenta? Inicia Sesión</Link>
-            </nav>
+           
 
             <form
                 onSubmit={handleSubmit(handleRegister)}
@@ -83,9 +93,9 @@ export default function RegisterView() {
                         className="bg-slate-100 border-none p-3 rounded-lg placeholder-slate-400"
                         {...register("password", {
                             required: "Ingrese una contraseña",
-                            minLength:{
-                                value:8,
-                                message:"Ingrese mínimo 8 caracteres"
+                            minLength: {
+                                value: 8,
+                                message: "Ingrese mínimo 8 caracteres"
                             }
                         })}
                     />
@@ -102,7 +112,7 @@ export default function RegisterView() {
                         {...register("password_confirmation", {
                             required: "Confirme la contraseña",
                             //value is the current value in this field when you're typing
-                            validate:(value)=> value === password || 'La contraseña no coincide'
+                            validate: (value) => value === password || 'La contraseña no coincide'
                         })}
                     />
                     {errors.password_confirmation && <ErrorMessage>{errors.password_confirmation.message}</ErrorMessage>}
@@ -114,6 +124,12 @@ export default function RegisterView() {
                     value='Crear Cuenta'
                 />
             </form>
+             <nav className="mt-10">
+                <Link
+                    className="text-white text-center text-lg block"
+                    to="/auth/login"
+                >Ya tienes una cuenta? Inicia Sesión</Link>
+            </nav>
 
         </>
     )

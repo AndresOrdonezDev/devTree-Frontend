@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+[data-sonner-toast][data-type="success"] {
+  background: #10b981 !important;
+  color: #fff !important;
+}
+
+[data-sonner-toast][data-type="error"] {
+  background: #ef4444 !important;
+  color: #fff !important;
+}
