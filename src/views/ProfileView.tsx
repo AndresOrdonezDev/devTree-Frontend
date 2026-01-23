@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 import { useQueryClient, useMutation } from '@tanstack/react-query'
 import ErrorMessage from '../components/ErrorMessage'
 import type { ProfileForm, User } from '../types'
-import { updateUserProfile } from '../api/DevTreeAPI'
+import { updateUserProfile, uploadImage } from '../api/DevTreeAPI'
 
 export default function ProfileView() {
     const queryClient = useQueryClient()
@@ -16,7 +16,7 @@ export default function ProfileView() {
         }
     })
 
-    const {mutate} = useMutation({
+    const updateProfileMutation = useMutation({
         mutationFn:updateUserProfile,
         onError:(data)=> toast.error(data.message),
         onSuccess:(data)=>{
@@ -24,9 +24,30 @@ export default function ProfileView() {
             queryClient.invalidateQueries({queryKey:['user']})
         }
     })
-    const handleUserProfileForm = (formData: ProfileForm) => {
-        mutate(formData)
+
+    const uploadImageMutation = useMutation({
+        mutationFn:uploadImage,
+        onError:(data)=>toast.error(data.message),
+        onSuccess:(data)=>{
+            toast.success(data?.message)
+            queryClient.setQueryData(['user'],(prevData:User)=>{
+                return {
+                    ...prevData,
+                    image:data.image
+                }
+            })
+        }
+    })
+    
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>)=>{
+        if(e.target.files){
+            uploadImageMutation.mutate(e.target.files[0])
+        }
     }
+    const handleUserProfileForm = (formData: ProfileForm) => {
+        updateProfileMutation.mutate(formData)
+    }
+
     return (
         <form
             className="bg-white p-10 rounded-lg space-y-5"
@@ -69,7 +90,7 @@ export default function ProfileView() {
                     name="handle"
                     className="border-none bg-slate-100 rounded-lg p-2"
                     accept="image/*"
-                    onChange={() => { }}
+                    onChange={handleChange}
                 />
             </div>
 
